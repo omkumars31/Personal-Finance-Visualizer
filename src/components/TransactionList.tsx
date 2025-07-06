@@ -1,42 +1,70 @@
 "use client";
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
+import TransactionForm from "./TransactionForm";
 
-export default function TransactionList(){
+type Transaction = {
+  _id: string;
+  amount: number;
+  description: string;
+  date: string;
+  category?: string;
+};
 
-    const [transactions, setTransactions] = useState<any[]>([]);
+export default function TransactionList({
+  transactions,
+  onDeleteSuccess,
+  onEditSuccess,
+}: {
+  transactions: Transaction[];
+  onDeleteSuccess: () => void;
+  onEditSuccess: () => void;
+}) {
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-    const fetchData = async() =>{
-        const res = await axios.get("/api/transactions");
-        setTransactions(res.data);
-    };
+  const deleteTransaction = async (id: string) => {
+    try {
+      await fetch(`/api/transactions/${id}`, { method: "DELETE" });
+      onDeleteSuccess();
+    } catch (error) {
+      console.error("Error deleting transaction:", error);
+    }
+  };
 
-    useEffect(() =>{
-        fetchData();
-
-    },[]);
-
-    const deleteTransaction = async (id: string) =>{
-        await axios.delete(`/api/transactions/${id}`);
-        fetchData();
-
-    };
-     return (
+  return (
     <div className="space-y-2">
-      {transactions.map((t) => (
-        <Card key={t._id} className="p-4 flex justify-between items-center">
-          <div>
-            <div className="font-semibold">₹{t.amount}</div>
-            <div className="text-sm text-muted-foreground">{t.description}</div>
-            <div className="text-xs">{new Date(t.date).toDateString()}</div>
-          </div>
-          <Button variant="destructive" onClick={() => deleteTransaction(t._id)}>
-            Delete
-          </Button>
-        </Card>
-      ))}
+      {editingTransaction ? (
+        <TransactionForm
+  transaction={{ ...editingTransaction, category: editingTransaction.category || "Others" }}
+  onCancel={() => setEditingTransaction(null)}
+  onSave={() => {
+    setEditingTransaction(null);
+    onEditSuccess();
+  }}
+/>
+
+      ) : (
+        transactions.map((t) => (
+          <Card key={t._id} className="p-4 flex justify-between items-center">
+            <div>
+              <div className="font-semibold">₹{t.amount}</div>
+              <div className="text-sm text-muted-foreground">{t.description}</div>
+              <div className="text-xs">
+                {new Date(t.date).toDateString()} • {t.category || "Others"}
+              </div>
+            </div>
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setEditingTransaction(t)}>
+                Edit
+              </Button>
+              <Button variant="destructive" onClick={() => deleteTransaction(t._id)}>
+                Delete
+              </Button>
+            </div>
+          </Card>
+        ))
+      )}
     </div>
   );
 }

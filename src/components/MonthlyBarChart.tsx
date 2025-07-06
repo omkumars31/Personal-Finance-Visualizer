@@ -1,7 +1,5 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import axios from "axios";
+import React from "react";
 import {
   BarChart,
   Bar,
@@ -16,44 +14,27 @@ interface Transaction {
   date: string;
 }
 
-export default function MonthlyBarChart() {
-  const [data, setData] = useState<{ month: string; amount: number }[]>([]);
+export default function MonthlyBarChart({ transactions }: { transactions: Transaction[] }) {
+  // Transform transactions into monthly aggregated data
+  const monthlyData = React.useMemo(() => {
+    const monthly: Record<string, number> = {};
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const res = await axios.get("/api/transactions");
-        const transactions: Transaction[] = res.data;
+    transactions.forEach((t) => {
+      if (!t.date || !t.amount) return;
+      const month = new Date(t.date).toLocaleString("default", {
+        month: "short",
+        year: "numeric",
+      });
+      monthly[month] = (monthly[month] || 0) + t.amount;
+    });
 
-        const monthly: Record<string, number> = {};
-
-        transactions.forEach((t) => {
-          if (!t.date || !t.amount) return;
-          const month = new Date(t.date).toLocaleString("default", {
-            month: "short",
-            year: "numeric",
-          });
-          monthly[month] = (monthly[month] || 0) + t.amount;
-        });
-
-        const formatted = Object.entries(monthly).map(([month, amount]) => ({
-          month,
-          amount,
-        }));
-
-        setData(formatted);
-      } catch (error) {
-        console.error("Error fetching monthly data:", error);
-      }
-    };
-
-    fetchData();
-  }, []);
+    return Object.entries(monthly).map(([month, amount]) => ({ month, amount }));
+  }, [transactions]);
 
   return (
     <div className="w-full h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data}>
+        <BarChart data={monthlyData}>
           <XAxis dataKey="month" />
           <YAxis />
           <Tooltip />
