@@ -35,16 +35,3 @@ A simple, modern, and responsive web application to help users track their perso
 | React     | Express (API) | TailwindCSS    |           |          |
 
 ---
-
-## 📸 Screenshots
-
-(Include images of Dashboard, Transaction Form, Pie & Bar Charts here if available)
-
----
-
-## 🚀 Getting Started (Local Development)
-
-1. **Clone the repo**
-   ```bash
-   git clone https://github.com/your-username/finance-visualizer.git
-   cd finance-visualizer
